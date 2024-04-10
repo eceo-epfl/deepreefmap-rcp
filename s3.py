@@ -111,7 +111,9 @@ def delete_all_output_files(
 
 if __name__ == "__main__":
     # Use CLI arguments upload or download to select function
-
+    print("Configuration:")
+    for key in ["INPUT_OBJECT_IDS", "SUBMISSION_ID", "FPS", "TIMESTAMP"]:
+        print(f"\t{key:20}: {getattr(config, key)}")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "action",
