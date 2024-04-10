@@ -18,7 +18,7 @@ class Config(BaseSettings):
 
     INPUT_OBJECT_IDS: list[str]
     SUBMISSION_ID: str
-    FPS: float
+    FPS: int
     TIMESTAMP: str
 
     CLI_CHOICES: list[str] = ["upload", "download"]
