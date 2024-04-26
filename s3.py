@@ -2,7 +2,7 @@ import boto3
 import os
 from pydantic_settings import BaseSettings
 import argparse
-import os
+import sys
 
 
 class Config(BaseSettings):
@@ -27,6 +27,11 @@ class Config(BaseSettings):
     INPUT_FOLDER: str = os.path.join(os.path.abspath(os.sep), "input")
     OUTPUT_FOLDER: str = os.path.join(os.path.abspath(os.sep), "output")
 
+    # The following are encoded in the Dockerfile and are used to output the
+    # versions of the software used in the container at runtime
+    GPMFSTREAM_GIT_HASH: str
+    DEEPREEF_GIT_HASH: str
+
 
 config = Config()
 
@@ -40,6 +45,9 @@ def download_from_s3(
     """
 
     print(f"Downloading assets from S3 bucket {config.S3_BUCKET_ID}")
+
+    if len(config.INPUT_OBJECT_IDS) == 0:
+        raise ValueError("No input files to download")
 
     # Download the assets from S3
     for asset in config.INPUT_OBJECT_IDS:
@@ -60,6 +68,7 @@ def upload_to_s3(
     """
 
     print(f"Uploading assets to S3 bucket {config.S3_BUCKET_ID}")
+    count = 0  # Count the number of files uploaded
 
     for output in os.listdir(config.OUTPUT_FOLDER):
         # Handle folders by appending the folder name to the output filename
@@ -75,6 +84,7 @@ def upload_to_s3(
                     f"{config.S3_PREFIX}/outputs/"
                     f"{config.SUBMISSION_ID}/{output}-{file}",
                 )
+                count += 1
         else:
             print(f"Uploading {output}")
             s3.upload_file(
@@ -82,6 +92,10 @@ def upload_to_s3(
                 config.S3_BUCKET_ID,
                 f"{config.S3_PREFIX}/outputs/{config.SUBMISSION_ID}/{output}",
             )
+            count += 1
+
+    if count == 0:
+        raise ValueError("No output files to upload")
 
 
 def delete_all_output_files(
@@ -111,8 +125,17 @@ def delete_all_output_files(
 
 if __name__ == "__main__":
     # Use CLI arguments upload or download to select function
-    print("Configuration:")
-    for key in ["INPUT_OBJECT_IDS", "SUBMISSION_ID", "FPS", "TIMESTAMP"]:
+
+    print("\nConfiguration:")
+    print("-----------------")
+    for key in [
+        "INPUT_OBJECT_IDS",
+        "SUBMISSION_ID",
+        "FPS",
+        "TIMESTAMP",
+        "DEEPREEF_GIT_HASH",
+        "GPMFSTREAM_GIT_HASH",
+    ]:
         print(f"\t{key:20}: {getattr(config, key)}")
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -136,14 +159,18 @@ if __name__ == "__main__":
         endpoint_url=f"https://{config.S3_URL}",
     )
 
-    if args.action == "upload":
-        upload_to_s3(s3)
-    elif args.action == "download":
-        delete_all_output_files(s3)
-        download_from_s3(s3)
-    else:
-        raise ValueError(
-            f"Invalid CLI action, acceptable choices are {config.CLI_CHOICES}"
-        )
+    try:
+        if args.action == "upload":
+            upload_to_s3(s3)
+        elif args.action == "download":
+            delete_all_output_files(s3)
+            download_from_s3(s3)
+        else:
+            raise ValueError(
+                f"Invalid CLI action, acceptable choices are {config.CLI_CHOICES}"
+            )
 
-    print("Done")
+        print("Done")
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)

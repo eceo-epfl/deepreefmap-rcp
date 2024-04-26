@@ -1,8 +1,8 @@
 FROM python:3.10-slim
 
 # Set commit hash for gpmfstream repo as there are no versions
-ARG GPMFSTREAM_GIT_HASH=f1a9742
-ARG DEEPREEF_GIT_HASH=dcd0a70db238f10fc49009d2377e76caa29adb02
+ENV GPMFSTREAM_GIT_HASH=f1a9742
+ENV DEEPREEF_GIT_HASH=6e459d151e745f24187253bb9ccc5cbb7a0340da
 
 RUN apt-get update && \
     apt-get install -y git wget unzip build-essential \
