@@ -1,6 +1,11 @@
 #!/bin/bash
-poetry add boto3 pydantic-settings
-poetry run python3 /app/s3.py download
+
+# Fail on error
+set -e
+
+# Run download command
+uv run python3 /app/s3.py download
+
 # Execute the script
 # Create a list from all files in input directory separated by comma
 # Run the script for each file in the list
@@ -9,7 +14,7 @@ poetry run python3 /app/s3.py download
 input_files=$(realpath -s /input/* |  tr '\n' ',' | sed 's/,$//')
 printf "Input files: $input_files\n"
 
-poetry run python3 reconstruct.py \
+uv run python3 reconstruct.py \
     --input_video=$input_files \
     --timestamp=$TIMESTAMP \
     --out_dir=/output \
@@ -17,4 +22,4 @@ poetry run python3 reconstruct.py \
     --tmp_dir=/tmp
 
 # Upload the output to S3
-poetry run python3 /app/s3.py upload
+uv run python3 /app/s3.py upload
