@@ -28,9 +28,8 @@ class Config(BaseSettings):
     OUTPUT_FOLDER: str = os.path.join(os.path.abspath(os.sep), "output")
 
     # The following are encoded in the Dockerfile and are used to output the
-    # versions of the software used in the container at runtime
-    GPMFSTREAM_GIT_HASH: str
-    DEEPREEF_GIT_HASH: str
+    # version of the software used in the container at runtime
+    BASE_IMAGE: str  # This is probably already in the Dockerfile
 
 
 config = Config()
@@ -133,8 +132,7 @@ if __name__ == "__main__":
         "SUBMISSION_ID",
         "FPS",
         "TIMESTAMP",
-        "DEEPREEF_GIT_HASH",
-        "GPMFSTREAM_GIT_HASH",
+        "BASE_IMAGE",
     ]:
         print(f"\t{key:20}: {getattr(config, key)}")
     parser = argparse.ArgumentParser()
